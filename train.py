@@ -36,7 +36,7 @@ val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=0
 #if pretrain:
 #    net.load_state_dict(torch.load(Model_path))
 
-net=UNet(n_channels=1, n_classes=1).to(device=device)
+net=UNet(n_channels=4, n_classes=1).to(device=device)
 #print(net)
 
 #optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8)
@@ -54,10 +54,11 @@ for epoch in range(epochs):
     start = time.time()
     running_loss = 0.0
     for i, batch in enumerate(train_loader):
-        #print(batch)
-        img,true_masks=batch
+        img, true_masks = batch
         true_masks = true_masks.to(device=device, dtype=torch.float32)
         true_masks = Variable(torch.unsqueeze(true_masks, dim=1).float(), requires_grad=False)
+        #print(batch)
+        '''       
         for k in range(0,1):#仅仅使用第一个
             img[k] = img[k].to(device=device, dtype=torch.float32)
             img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)            
@@ -74,7 +75,10 @@ for epoch in range(epochs):
         '''
         for k in range(0, 4):
             img[k] = img[k].to(device=device, dtype=torch.float32)
-            img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)
+            #img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)
+            print(img[k].size())
+        img = torch.stack((img[0], img[1], img[2],img[3]), dim=1)
+        #print(img.size())
         masks_pred = net(img)
         # masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)  # 二值化
         # masks_pred=torch.sigmoid(masks_pred)
@@ -84,7 +88,7 @@ for epoch in range(epochs):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        '''
+
         if i % 10 == 9:
             end=time.time()
             print('[epoch {},images {}] training loss = {:.5f}  time: {:.3f} s'.
