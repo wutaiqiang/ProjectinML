@@ -76,7 +76,7 @@ for epoch in range(epochs):
         for k in range(0, 4):
             img[k] = img[k].to(device=device, dtype=torch.float32)
             #img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)
-            print(img[k].size())
+            #print(img[k].size())
         img = torch.stack((img[0], img[1], img[2],img[3]), dim=1)
         #print(img.size())
         masks_pred = net(img)
@@ -101,14 +101,17 @@ for epoch in range(epochs):
         img, true_masks = batch
         true_masks = true_masks.to(device=device, dtype=torch.float32)
         true_masks = Variable(torch.unsqueeze(true_masks, dim=1).float(), requires_grad=False)
-        for k in range(0,1):
+        for k in range(0, 4):
             img[k] = img[k].to(device=device, dtype=torch.float32)
-            img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)
-            masks_pred = net(img[k])
-            #masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)  # 二值化
-            val_loss += criterion(masks_pred, true_masks).item()
+            #img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)
+            #print(img[k].size())
+        img = torch.stack((img[0], img[1], img[2],img[3]), dim=1)
+        #print(img.size())
+        masks_pred = net(img)
+        #masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)  # 二值化
+        val_loss += criterion(masks_pred, true_masks).item()
     print('epoch {}'.format(epoch+1),end='\t')
     print('val_loss:{}'.format(val_loss / (4 * len(val_loader))))
 
-torch.save(net.state_dict(), './using1only_model_'+str(epochs)+'_epoch.pth')
+torch.save(net.state_dict(), './stack_model_'+str(epochs)+'_epoch.pth')
 #考虑加入dropout
