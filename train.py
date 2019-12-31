@@ -35,7 +35,8 @@ val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=0
 #net = RUNet(BN_enable=True, resnet_pretrain=False).to(device)
 #if pretrain:
 #    net.load_state_dict(torch.load(Model_path))
-net = UNet(n_channels=1, n_classes=1).to(device=device)
+
+net=UNet(n_channels=1, n_classes=1).to(device=device)
 #print(net)
 
 #optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8)
@@ -57,7 +58,7 @@ for epoch in range(epochs):
         img,true_masks=batch
         true_masks = true_masks.to(device=device, dtype=torch.float32)
         true_masks = Variable(torch.unsqueeze(true_masks, dim=1).float(), requires_grad=False)
-        for k in range(0,4):
+        for k in range(0,1):#仅仅使用第一个
             img[k] = img[k].to(device=device, dtype=torch.float32)
             img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)            
             masks_pred = net(img[k])
@@ -96,7 +97,7 @@ for epoch in range(epochs):
         img, true_masks = batch
         true_masks = true_masks.to(device=device, dtype=torch.float32)
         true_masks = Variable(torch.unsqueeze(true_masks, dim=1).float(), requires_grad=False)
-        for k in range(0, 4):
+        for k in range(0,1):
             img[k] = img[k].to(device=device, dtype=torch.float32)
             img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)
             masks_pred = net(img[k])
@@ -105,7 +106,5 @@ for epoch in range(epochs):
     print('epoch {}'.format(epoch+1),end='\t')
     print('val_loss:{}'.format(val_loss / (4 * len(val_loader))))
 
-torch.save(net.state_dict(), './model_'+str(epochs)+'_epoch.pth')
+torch.save(net.state_dict(), './using1only_model_'+str(epochs)+'_epoch.pth')
 #考虑加入dropout
-#这里引入4张图片->一个label的形式，将4张图片的结果，经过线性层之后，得到label
-#代码改进：net(a,b,c,d)
