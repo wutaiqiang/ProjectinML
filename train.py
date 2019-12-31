@@ -16,7 +16,7 @@ data_file='./data_train'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 batch_size=1
-epochs=10
+epochs=2
 learnrate=1e-3
 pretrain=False
 Model_path='./model.pth'
@@ -75,7 +75,7 @@ for epoch in range(epochs):
         '''
         for k in range(0, 4):
             img[k] = img[k].to(device=device, dtype=torch.float32)
-            #img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)
+            img[k] = Variable(img[k],requires_grad=False)
             #print(img[k].size())
         img = torch.stack((img[0], img[1], img[2],img[3]), dim=1)
         #print(img.size())
