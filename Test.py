@@ -13,10 +13,10 @@ from unet import UNet
 from resnet50model import Resnet_Unet as RUNet
 
 #参数
-data_file='./data_val'
+data_file='./data_train'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 batch_size=1
-Model_path='./model_10_epoch.pth'
+Model_path='./model_2_epoch.pth'
 transform = transforms.Compose([
     #transforms.Resize((256,256)),
     transforms.ToTensor()
@@ -27,13 +27,15 @@ data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_worke
 
 Model = UNet(n_channels=1, n_classes=1).to(device=device)
 Model.load_state_dict(torch.load(Model_path))
-print(Model)
+#print(Model)
 Model.eval()
 
 for i, batch in enumerate(data_loader):
         #print(batch)
         img,true_masks=batch
+        
         mask_sum=torch.ones(true_masks.shape[1],true_masks.shape[2]).type(dtype=torch.float32)
+        
         for k in range(0,4):
             img[k] = img[k].to(device=device, dtype=torch.float32)
             img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)
@@ -47,5 +49,19 @@ for i, batch in enumerate(data_loader):
         plt.subplot(2,3,6)
         plt.imshow(true_masks[0,:,:])
         plt.show()
+            
+        '''
+        for k in range(0, 4):
+            img[k] = img[k].to(device=device, dtype=torch.float32)
+            img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)
+        masks_pred = Model(img)
+        masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)
+        print(masks_pred)
+        plt.subplot(211)
+        plt.imshow(masks_pred[0,0,:,:].cpu())
+        plt.subplot(212)
+        plt.imshow(true_masks[0,:,:])
+        plt.show()
+        '''
 
 

@@ -73,3 +73,17 @@ class OutConv(nn.Module):
 
     def forward(self, x):
         return self.conv(x)
+
+class OUTLinear(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.weight1 = torch.randn([1, 1, 260, 320], requires_grad=True).cuda()
+        self.weight2 = torch.randn([1, 1, 260, 320], requires_grad=True).cuda()
+        self.weight3 = torch.randn([1, 1, 260, 320], requires_grad=True).cuda()
+        self.weight4 = torch.randn([1, 1, 260, 320], requires_grad=True).cuda()
+        
+
+    def forward(self,x1,x2,x3,x4):
+        x = torch.mul(self.weight1,x1)+torch.mul(self.weight2,x2)+torch.mul(self.weight3,x3)+torch.mul(self.weight4,x4)
+        x = x/4
+        return x

@@ -22,10 +22,13 @@ class UNet(nn.Module):
         self.up3 = Up(256, 64, bilinear)
         self.up4 = Up(128, 64, bilinear)
         self.outc = OutConv(64, n_classes)
+        #在四个阶段的输出后面加入线性层
+        self.Outlinear=OUTLinear()
 
-    def forward(self, xlist):
-
-        x1 = self.inc(xlist)
+    def forward(self, x):
+        #logits=[]
+        #for x in xlist:
+        x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
         x4 = self.down3(x3)
@@ -35,5 +38,7 @@ class UNet(nn.Module):
         x = self.up3(x, x2)
         x = self.up4(x, x1)
         logits = self.outc(x)
+            #logits.append(self.outc(x))
+        #out=self.Outlinear(logits[0],logits[1],logits[2],logits[3])
 
         return logits
