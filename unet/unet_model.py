@@ -1,7 +1,7 @@
 """ Full assembly of the parts to form the complete network """
 
 import torch.nn.functional as F
-
+import torch.nn as nn
 from .unet_parts import *
 
 
@@ -42,3 +42,6 @@ class UNet(nn.Module):
         #out=self.Outlinear(logits[0],logits[1],logits[2],logits[3])
 
         return logits
+
+ 
+ 

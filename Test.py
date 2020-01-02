@@ -16,7 +16,7 @@ from resnet50model import Resnet_Unet as RUNet
 data_file='./data_val'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 batch_size=1
-Model_path='./SGD-One_model_10_epoch.pth'
+Model_path='./added_data_stack_model_5_epoch.pth'
 
 transform = transforms.Compose([
     #transforms.Resize((256,256)),
@@ -36,7 +36,7 @@ for i, batch in enumerate(data_loader):
         #print(batch)
         img,true_masks=batch
         '''
-         for k in range(0,4):
+        for k in range(0,4):
             img[k] = img[k].to(device=device, dtype=torch.float32)
             #img[k] = Variable(img[k], requires_grad=False)
             #img[k] = Variable(requires_grad=False)
@@ -45,21 +45,24 @@ for i, batch in enumerate(data_loader):
         #print(img.size())
         #print(img.size())
         masks_pred = Model(img)
-        masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)
+
+        masks_pred = torch.ge(masks_pred, 0.2).type(dtype=torch.float32)
+
         plt.subplot(121)
         plt.imshow(masks_pred[0, 0, :, :].cpu())
         plt.subplot(122)
         plt.imshow(true_masks[0, :, :])
         plt.pause(2)
-        '''
+        #plt.show()
 
+        '''
         mask_sum=torch.zeros(260,320)
-        for k in range(0,4):
+        for k in range(1,3):
             img[k] = img[k].to(device=device, dtype=torch.float32)
             img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)
             
             masks_pred = Model(img[k])
-            masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)
+            masks_pred = torch.ge(masks_pred, 0.01).type(dtype=torch.float32)
             plt.subplot(2,3,k+1)
             plt.imshow(masks_pred[0,0,:,:].cpu())
             mask_sum.add_(masks_pred[0,0,:,:].cpu())
@@ -69,19 +72,5 @@ for i, batch in enumerate(data_loader):
         plt.imshow(true_masks[0,:,:])
         plt.pause(2)
         #plt.show()
-
-        '''
-        for k in range(0, 4):
-            img[k] = img[k].to(device=device, dtype=torch.float32)
-            img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)
-        masks_pred = Model(img)
-        masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)
-        print(masks_pred)
-        plt.subplot(211)
-        plt.imshow(masks_pred[0,0,:,:].cpu())
-        plt.subplot(212)
-        plt.imshow(true_masks[0,:,:])
-        plt.show()
-        '''
 
 

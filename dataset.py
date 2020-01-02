@@ -61,6 +61,7 @@ def readfolder(folder):
         d_path = os.path.join(folder,dname[k])
         img2 = sitk.ReadImage(d_path)
         data.append(sitk.GetArrayFromImage(img2))
+        
     #print(len(data))
     return data,label
 
@@ -68,7 +69,7 @@ class MyDataSet(Dataset):
     '''
     获取数据集，以FZMC开头的nii才行
     '''
-    def __init__(self,data_file,transform_data=None,transform_label=None):
+    def __init__(self,data_file,transform_data=None,transform_label=None,add_labeled_sample=False):
         self.data_file=data_file
         self.transform1=transform_data
         self.transform2=transform_label
@@ -80,12 +81,19 @@ class MyDataSet(Dataset):
         a_label=[]
         for mfolder in mfolders:
             mdata,mlabel=readfolder(data_file+'/'+mfolder)
-            for i in range(min(mdata[0].shape[0],mdata[1].shape[0],mdata[2].shape[0],mdata[3].shape[0])):
+            aa=min(mdata[0].shape[0],mdata[1].shape[0],mdata[2].shape[0],mdata[3].shape[0])
+            for i in range(aa):
                 a_data1.append(mdata[0][i,:,:])
                 a_data2.append(mdata[1][i,:,:])
                 a_data3.append(mdata[2][i,:,:])
                 a_data4.append(mdata[3][i,:,:])
                 a_label.append(mlabel[i,:,:])
+                if add_labeled_sample and label_tumor_exist(mlabel[i,:,:]):
+                    a_data1.append(np.fliplr(mdata[0][i,:,:]))
+                    a_data2.append(np.fliplr(mdata[1][i,:,:]))
+                    a_data3.append(np.fliplr(mdata[2][i,:,:]))
+                    a_data4.append(np.fliplr(mdata[3][i,:,:]))
+                    a_label.append(np.fliplr(mlabel[i,:,:]))
         self.a_data1=a_data1
         self.a_data2=a_data2
         self.a_data3=a_data3
@@ -116,16 +124,28 @@ class MyDataSet(Dataset):
         #return self.a_data1[index][:,:],self.a_data2[index][:,:],self.a_data3[index][:,:],self.a_data4[index][:,:],self.a_label[index][:,:]
     def __len__(self):
         return len(self.a_label)
-    
+def label_tumor_exist(a):
+    aa=np.sum(a)
+    return aa>0
+        
+      
 if __name__=='__main__':
     '''
     d,l=readfolder('./data/FZMC001')
     show_img(d,l)
     '''
-    a=MyDataSet('./data_val')
-    train_loader = DataLoader(a, batch_size=1, shuffle=False, num_workers=0, pin_memory=True)
-    print(len(a))
-    for i, batch in enumerate(train_loader):
+    a=MyDataSet('./data_train',add_labeled_sample=True)
+    train_loader = DataLoader(a, batch_size=1, shuffle=True, num_workers=0, pin_memory=True)
+    print(len(a),end='\t')
+    T=0
+    for ii,batch in enumerate(train_loader):
+        i,mask=batch
+        if label_tumor_exist(mask.squeeze().cpu().numpy()):
+            T=T+1
+    print("in which {} with tumor,{} wothout tumor".format(T,len(a)-T))
+        
+    '''
+    for ii, batch in enumerate(train_loader):
         i,mask=batch
         plt.subplot(2,3,1)
         plt.imshow(i[0].squeeze())
@@ -135,9 +155,12 @@ if __name__=='__main__':
         plt.imshow(i[2].squeeze())
         plt.subplot(2,3,4)
         plt.imshow(i[3].squeeze())
+        print(label_tumor_exist(mask.squeeze()))
         plt.subplot(2,3,6)
         plt.imshow(mask.squeeze())
         plt.show()
+    '''
+       
         
     
     
