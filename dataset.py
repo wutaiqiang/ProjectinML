@@ -134,7 +134,7 @@ if __name__=='__main__':
     d,l=readfolder('./data/FZMC001')
     show_img(d,l)
     '''
-    a=MyDataSet('./data_train',add_labeled_sample=True)
+    a=MyDataSet('./data_train',add_labeled_sample=False)
     train_loader = DataLoader(a, batch_size=1, shuffle=True, num_workers=0, pin_memory=True)
     print(len(a),end='\t')
     T=0
