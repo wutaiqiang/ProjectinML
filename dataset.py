@@ -9,6 +9,28 @@ from os.path import splitext
 import numpy as np
 from glob import glob
 from torch.utils.data import DataLoader, random_split
+import torch.nn as nn
+import torch.nn.functional as F
+from PIL import Image
+
+
+class SoftDiceLoss(nn.Module):
+    def __init__(self, weight=None, size_average=True):
+        super(SoftDiceLoss, self).__init__()
+
+    def forward(self, logits, targets):
+        num = targets.size(0)
+        smooth = 1
+
+        probs = torch.sigmoid(logits)
+        m1 = probs.view(num, -1)
+        m2 = targets.view(num, -1)
+        intersection = (m1 * m2)
+
+        score = 2. * (intersection.sum(1) + smooth) / (m1.sum(1) + m2.sum(1) + smooth)
+        score = 1 - score.sum() / num
+        return score
+
 
 def show_img(data,label):
     '''
@@ -29,6 +51,8 @@ def show_img(data,label):
         plt.xlabel('Label'+str(i))
         #plt.colorbar()
         plt.show()
+
+
 def nii2array(image_data):
     '''
     缩放到[0,255]的numpy uint8数组
@@ -45,6 +69,8 @@ def nii2array(image_data):
         bytedata = (image_data[:, :] - cmin) * scale + low
         #image = (bytedata.clip(low, high) + 0.5).astype(np.uint8)
         return bytedata
+
+
 def readfolder(folder):
     '''
     读取文件夹内的nii
@@ -102,32 +128,43 @@ class MyDataSet(Dataset):
 
     def __getitem__(self, index):
         if self.transform1 is not None:
+
             image1 = self.transform1(self.a_data1[index][:,:])
             image2 = self.transform1(self.a_data2[index][:,:])
             image3 = self.transform1(self.a_data3[index][:,:])
             image4 = self.transform1(self.a_data4[index][:,:])
             
         else:
-            image1 = self.a_data1[index][:,:]
-            image2 = self.a_data2[index][:,:]
-            image3 = self.a_data3[index][:,:]
-            image4 = self.a_data4[index][:,:]
+            image1 = self.a_data1[index][:256,:]
+            image2 = self.a_data2[index][:256,:]
+            image3 = self.a_data3[index][:256,:]
+            image4 = self.a_data4[index][:256,:]
         if self.transform2 is not None:  
             mask = self.transform2(self.a_label[index][:,:])
         else:
-            mask = self.a_label[index][:,:]
+            mask = self.a_label[index][:256,:]
 
         #return [torch.from_numpy(image1/1.0),torch.from_numpy(image2/1.0),
                 #torch.from_numpy(image3/1.0),torch.from_numpy(image4/1.0),torch.from_numpy(mask/1.0)]
         return [[image1/1.0,image2/1.0,
                 image3/1.0,image4/1.0],mask/1.0]
-        #return self.a_data1[index][:,:],self.a_data2[index][:,:],self.a_data3[index][:,:],self.a_data4[index][:,:],self.a_label[index][:,:]
+        # return self.a_data1[index][:,:],self.a_data2[index][:,:],self.a_data3[index][:,:],self.a_data4[index][:,:],self.a_label[index][:,:]
+
     def __len__(self):
         return len(self.a_label)
+
+
 def label_tumor_exist(a):
     aa=np.sum(a)
     return aa>0
-        
+
+def gray2rgb_tensor(input):
+    a = input.squeeze()
+    maxa = torch.max(a)
+    mina = torch.min(a)
+    a = (a - mina) / (maxa - mina)
+    a = torch.stack((a, a, a), dim=1)
+    return a
       
 if __name__=='__main__':
     '''
@@ -136,6 +173,7 @@ if __name__=='__main__':
     '''
     a=MyDataSet('./data_train',add_labeled_sample=False)
     train_loader = DataLoader(a, batch_size=1, shuffle=True, num_workers=0, pin_memory=True)
+    '''
     print(len(a),end='\t')
     T=0
     for ii,batch in enumerate(train_loader):
@@ -143,23 +181,37 @@ if __name__=='__main__':
         if label_tumor_exist(mask.squeeze().cpu().numpy()):
             T=T+1
     print("in which {} with tumor,{} wothout tumor".format(T,len(a)-T))
-        
     '''
+
     for ii, batch in enumerate(train_loader):
         i,mask=batch
-        plt.subplot(2,3,1)
-        plt.imshow(i[0].squeeze())
-        plt.subplot(2,3,2)
-        plt.imshow(i[1].squeeze())
-        plt.subplot(2,3,3)
-        plt.imshow(i[2].squeeze())
-        plt.subplot(2,3,4)
-        plt.imshow(i[3].squeeze())
-        print(label_tumor_exist(mask.squeeze()))
+        for j in range(0,4):
+            a= gray2rgb_tensor(i[j])
+            a= a.cpu().numpy()
+            plt.subplot(2, 3, j + 1)
+            plt.imshow(a)
         plt.subplot(2,3,6)
         plt.imshow(mask.squeeze())
         plt.show()
     '''
+    for ii, batch in enumerate(train_loader):
+        i, mask = batch
+        a= torch.zeros([4,256,320])
+        for j in range(0, 4):
+            a[j] = i[j].squeeze()
+            maxa = torch.max(a[j])
+            mina = torch.min(a[j])
+            a[j] = (a[j] - mina) / (maxa - mina)
+        aa= torch.stack((a[1], a[2], a[3]), dim=2)
+        aa = aa.cpu().numpy()
+        plt.subplot(2, 1,  1)
+        plt.imshow(aa)
+        plt.subplot(2, 1, 2)
+        plt.imshow(mask.squeeze())
+        plt.show()
+    '''
+
+
        
         
     
