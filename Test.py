@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from torch import optim
 from torchvision import transforms
-from dataset import MyDataSet
+from dataset import *
 from torch.utils.data import DataLoader, random_split
 from torch.autograd import Variable
 import time
@@ -18,20 +18,12 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 batch_size=1
 Model_path='./added_data_stack_model_5_epoch.pth'
 
-transform = transforms.Compose([
-    #transforms.Resize((256,256)),
-    transforms.ToTensor()
-])
-#划分数据集
 dataset = MyDataSet(data_file,transform_data=None,transform_label=None)
 data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
-
-Model = UNet(n_channels=1, n_classes=1).to(device=device)
+Model = UNet(n_channels=3, n_classes=1).to(device=device)
 Model.load_state_dict(torch.load(Model_path))
 
-#print(Model)
 Model.eval()
-
 for i, batch in enumerate(data_loader):
         #print(batch)
         img,true_masks=batch
@@ -56,11 +48,9 @@ for i, batch in enumerate(data_loader):
         #plt.show()
 
         '''
-        mask_sum=torch.zeros(260,320)
-        for k in range(1,3):
-            img[k] = img[k].to(device=device, dtype=torch.float32)
-            img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)
-            
+        mask_sum=torch.zeros(256,320)
+        for k in range(0,4):
+            img[k] = gray2rgb_tensor(img[k].to(device=device, dtype=torch.float32))
             masks_pred = Model(img[k])
             masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)
             plt.subplot(2,3,k+1)

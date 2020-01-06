@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, random_split
 from torch.autograd import Variable
 import time
 from dataset import *
-from unet import UNet
+from unet_mlp import UNet
 from resnet50model import Resnet_Unet as RUNet
 #可调节参数
 val_percent=0.2
@@ -62,14 +62,12 @@ for epoch in range(epochs):
 
         for k in range(0,4):
             img[k] = gray2rgb_tensor(img[k]).to(device=device, dtype=torch.float32)
-            masks_pred = net(img[k])
-            #masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)  # 二值化
-            #注意这里的维度【batch-size，channel，w，h】
-            loss = criterion(masks_pred, true_masks)
-            running_loss += loss.item()
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+        masks_pred = net(img)
+        loss = criterion(masks_pred, true_masks)
+        running_loss += loss.item()
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
         if i % 10 == 9:
             end=time.time()
             print('[epoch {},images {}] training loss = {:.5f}  time: {:.3f} s'.
@@ -84,12 +82,12 @@ for epoch in range(epochs):
         true_masks = true_masks.to(device=device, dtype=torch.float32)
         true_masks = Variable(torch.unsqueeze(true_masks, dim=1).float(), requires_grad=False)
         for k in range(0, 4):
-            img[k] = gray2rgb_tensor(img[k]).to(device=device, dtype=torch.float32)
-            masks_pred = net(img[k])
-            val_loss += criterion(masks_pred, true_masks).item()
+            img[k] = gray2rgb_tensor(img[k].to(device=device, dtype=torch.float32))
+        masks_pred = net(img)
+        val_loss += criterion(masks_pred, true_masks).item()
 
     print('epoch {}'.format(epoch+1),end='\t')
     print('val_loss:{}'.format(val_loss / (4 * len(val_loader))))
 
-torch.save(net.state_dict(), './UNET_model+'+str(learnrate)+'_lr_'+str(epochs)+'_epoch.pth')
+torch.save(net.state_dict(), './UNET_mlp_model+'+str(learnrate)+'_lr_'+str(epochs)+'_epoch.pth')
 
