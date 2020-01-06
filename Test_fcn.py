@@ -16,7 +16,7 @@ from FCNmodel import FCNs,VGGNet
 data_file='./data_val'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 batch_size=1
-Model_path='./FCN_lr0.0001_model_20_epoch.pth'
+Model_path= 'FCN_lr0.0001_model_20_epoch.pth'
 
 transform = transforms.Compose([
     #transforms.Resize((256,256)),
@@ -28,7 +28,7 @@ data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_worke
 
 
 vgg_model = VGGNet(requires_grad=True)
-Model = FCNs(pretrained_net=vgg_model, n_class=1).to(device=device)
+Model = FCNs(pretrained_net=vgg_model, n_class=2).to(device=device)
 Model.load_state_dict(torch.load(Model_path))
 #print(Model)
 Model.eval()
@@ -37,43 +37,37 @@ for i, batch in enumerate(data_loader):
         #print(batch)
         img,true_masks=batch
 
+        '''
         for k in range(0,4):
             img[k]=gray2rgb_tensor(img[k]).to(device=device)
             masks_pred = Model(img[k])
-            masks_pred = torch.ge(masks_pred, 0.0000001).type(dtype=torch.float32)
+            masks_pred = torch.ge(masks_pred[0,0,:,:], 0.0000001).type(dtype=torch.float32)
             #masks_pred = torch.sigmoid(masks_pred)
-        plt.subplot(231)
-        plt.imshow(img[0][0,0,:,:].cpu().numpy())
-        plt.subplot(232)
-        plt.imshow(img[1][0,0,:,:].cpu().numpy())
-        plt.subplot(233)
-        plt.imshow(img[2][0,0,:,:].cpu().numpy())
-        plt.subplot(234)
-        plt.imshow(img[3][0,0,:,:].cpu().numpy())
-        plt.subplot(235)
-        plt.imshow(masks_pred[0, 0, :, :].cpu())
-        plt.subplot(236)
-        plt.imshow(true_masks[0, :, :])
-        #plt.pause(2)
-        plt.show()
-
+            plt.subplot(221)
+            plt.suptitle('PICTURE {}'.format(k+1))
+            plt.imshow(img[k][0,0,:,:].cpu().numpy())
+            plt.subplot(222)
+            plt.imshow(masks_pred.cpu())
+            plt.subplot(223)
+            plt.imshow(true_masks[0, :, :])
+            #plt.pause(2)
+            plt.show()
         '''
-        mask_sum=torch.zeros(260,320)
-        for k in range(1,3):
-            img[k] = img[k].to(device=device, dtype=torch.float32)
-            img[k] = Variable(torch.unsqueeze(img[k], dim=1).float(), requires_grad=False)
-            
+        mask_sum=torch.zeros(256,320)
+        for k in range(0,4):
+            img[k] = gray2rgb_tensor(img[k]).to(device=device)
             masks_pred = Model(img[k])
-            masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)
+            masks_pred = torch.ge(masks_pred[0, 0, :, :], 0.0000001).type(dtype=torch.float32)
             plt.subplot(2,3,k+1)
-            plt.imshow(masks_pred[0,0,:,:].cpu())
-            mask_sum.add_(masks_pred[0,0,:,:].cpu())
+            #plt.imshow(masks_pred.cpu())
+            plt.imshow(img[k][0,0,:,:].cpu())
+            mask_sum.add_(masks_pred.cpu())
         plt.subplot(2,3,5)
         plt.imshow(mask_sum)
         plt.subplot(2,3,6)
         plt.imshow(true_masks[0,:,:])
-        plt.pause(2)
-        #plt.show()
-        '''
+        #plt.pause(2)
+        plt.show()
+
 
 

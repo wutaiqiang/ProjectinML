@@ -38,7 +38,7 @@ val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=0
 #if pretrain:
 #    net.load_state_dict(torch.load(Model_path))
 vgg_model = VGGNet(requires_grad=True)
-net = FCNs(pretrained_net=vgg_model, n_class=1).to(device=device)
+net = FCNs(pretrained_net=vgg_model, n_class=2).to(device=device)
 #print(net)
 
 #optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8)
@@ -60,8 +60,9 @@ for epoch in range(epochs):
         if not label_tumor_exist(true_masks.squeeze().cpu().numpy()):
             continue
         ii=ii+1
-        true_masks = true_masks.to(device=device, dtype=torch.float32)
-        true_masks = Variable(torch.unsqueeze(true_masks, dim=1).float(), requires_grad=False)
+        #true_masks = true_masks.to(device=device, dtype=torch.float32)
+        #true_masks = Variable(torch.unsqueeze(true_masks, dim=1).float(), requires_grad=False)
+        true_masks = layer2_label(true_masks).to(device=device)
         #print(batch)
 
         for k in range(0,4):
@@ -113,8 +114,9 @@ for epoch in range(epochs):
     net.eval()
     for i, batch in enumerate(val_loader):
         img, true_masks = batch
-        true_masks = true_masks.to(device=device, dtype=torch.float32)
-        true_masks = Variable(torch.unsqueeze(true_masks, dim=1).float(), requires_grad=False)
+        #true_masks = true_masks.to(device=device, dtype=torch.float32)
+        #true_masks = Variable(torch.unsqueeze(true_masks, dim=1).float(), requires_grad=False)
+        true_masks = layer2_label(true_masks).to(device=device)
         for k in range(0, 4):
             #img[k] = img[k].to(device=device, dtype=torch.float32)
             img[k] = gray2rgb_tensor(img[k]).to(device=device)

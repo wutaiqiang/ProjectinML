@@ -31,28 +31,6 @@ class SoftDiceLoss(nn.Module):
         score = 1 - score.sum() / num
         return score
 
-
-import torch.nn as nn
-import torch.nn.functional as F
-
-
-class SoftDiceLoss(nn.Module):
-    def __init__(self, weight=None, size_average=True):
-        super(SoftDiceLoss, self).__init__()
-
-    def forward(self, logits, targets):
-        num = targets.size(0)
-        smooth = 1
-
-        probs = F.sigmoid(logits)
-        m1 = probs.view(num, -1)
-        m2 = targets.view(num, -1)
-        intersection = (m1 * m2)
-
-        score = 2. * (intersection.sum(1) + smooth) / (m1.sum(1) + m2.sum(1) + smooth)
-        score = 1 - score.sum() / num
-        return score
-
 def show_img(data,label):
     '''
     将nii得到的图片依次可视化
@@ -189,6 +167,30 @@ def gray2rgb_tensor(input):
         output[b,:,:,:] = torch.stack((a, a, a), dim=0)
     #print(output.size())
     return output
+
+def gray2rgb_tensor(input):
+    output = torch.zeros(input.size(0),3,input.size(1),input.size(2))
+    for b in range(input.size(0)):
+        a=input[b,:,:]
+        maxa = torch.max(a)
+        mina = torch.min(a)
+        a = (a - mina) / (maxa - mina)
+        output[b,:,:,:] = torch.stack((a, a, a), dim=0)
+    #print(output.size())
+    return output
+
+def layer2_label(input):
+    #print(input.size())
+    output = torch.zeros(input.size(0), 2, input.size(1), input.size(2))
+    for j in range(input.size(0)):
+        input1 = input[j,:,:]
+
+        input2 = torch.ones_like(input1)
+        input2 = input2 - input1
+        output[j,:,:,:] = torch.stack((input1, input2), dim=0)
+    #print(output.size())
+    return output
+
       
 if __name__=='__main__':
     '''
