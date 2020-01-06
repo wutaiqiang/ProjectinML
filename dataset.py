@@ -159,12 +159,15 @@ def label_tumor_exist(a):
     return aa>0
 
 def gray2rgb_tensor(input):
-    a = input.squeeze()
-    maxa = torch.max(a)
-    mina = torch.min(a)
-    a = (a - mina) / (maxa - mina)
-    a = torch.stack((a, a, a), dim=1)
-    return a
+    output = torch.zeros(input.size(0),3,input.size(1),input.size(2))
+    for b in range(input.size(0)):
+        a=input[b,:,:]
+        maxa = torch.max(a)
+        mina = torch.min(a)
+        a = (a - mina) / (maxa - mina)
+        output[b,:,:,:] = torch.stack((a, a, a), dim=0)
+    #print(output.size())
+    return output
       
 if __name__=='__main__':
     '''

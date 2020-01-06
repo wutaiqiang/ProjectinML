@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 from torch import optim
 from torchvision import transforms
-from dataset import MyDataSet
 from torch.utils.data import DataLoader, random_split
 from torch.autograd import Variable
 import time
@@ -66,10 +65,12 @@ for epoch in range(epochs):
         #print(batch)
 
         for k in range(0,4):
-            img[k] = img[k].to(device=device, dtype=torch.float32)
-            img[k]=gray2rgb_tensor(img[k])
-            #img[k] = Variable(img[k], requires_grad=False)
+            #img[k] = img[k].to(device=device, dtype=torch.float32)
+            if img[k].size(0)!=5:
+                print(img[k].size())
+            img[k]=gray2rgb_tensor(img[k]).to(device=device)
             #print(img[k].size())
+            #img[k] = Variable(img[k], requires_grad=False)
             masks_pred = net(img[k])
             #masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)  # 二值化
             #masks_pred=torch.sigmoid(masks_pred)
@@ -104,7 +105,7 @@ for epoch in range(epochs):
         if ii % 10 == 9:
             end=time.time()
             print('[epoch {},images {}] training loss = {:.5f}  time: {:.3f} s'.
-                    format(epoch + 1, (ii+1)*batch_size, running_loss / 10,end-start))
+                    format(epoch + 1, (ii+1)*batch_size, running_loss /(10*batch_size*4),end-start))
             start = time.time()
             running_loss = 0.0
 
@@ -115,8 +116,9 @@ for epoch in range(epochs):
         true_masks = true_masks.to(device=device, dtype=torch.float32)
         true_masks = Variable(torch.unsqueeze(true_masks, dim=1).float(), requires_grad=False)
         for k in range(0, 4):
+            #img[k] = img[k].to(device=device, dtype=torch.float32)
             img[k] = gray2rgb_tensor(img[k])
-            img[k] = Variable(img[k], requires_grad=False)
+            #img[k] = Variable(img[k], requires_grad=False)
             masks_pred = net(img[k])
             #masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)  # 二值化
             #masks_pred[masks_pred < 0.0] = 0.0
