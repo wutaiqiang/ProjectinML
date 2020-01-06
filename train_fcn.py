@@ -18,16 +18,16 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 #device = torch.device('cpu')
 print(device)
-batch_size=5
-epochs=5
-learnrate=1e-3
+batch_size=1
+epochs=20
+learnrate=1e-4
 pretrain=False
 Model_path='./model.pth'
 transform = transforms.Compose([
     #transforms.ToTensor(),
 ])
 #划分数据集
-dataset = MyDataSet(data_file,transform_data=None,transform_label=None,add_labeled_sample=True)
+dataset = MyDataSet(data_file,transform_data=None,transform_label=None,add_labeled_sample=False)
 n_val = int(len(dataset) * val_percent)
 n_train = len(dataset) - n_val
 train, val = random_split(dataset, [n_train, n_val])
@@ -42,13 +42,13 @@ net = FCNs(pretrained_net=vgg_model, n_class=1).to(device=device)
 #print(net)
 
 #optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8)
-#optimizer = optim.Adam(net.parameters(), lr=learnrate)
-optimizer=optim.SGD(net.parameters(), lr=learnrate,momentum=0.9)
+optimizer = optim.Adam(net.parameters(), lr=learnrate, betas=(0.9, 0.99))
+# optimizer=optim.SGD(net.parameters(), lr=learnrate,momentum=0.9)
 #criterion = nn.BCELoss().to(device)
 
-#criterion = nn.BCELoss()
-#criterion = nn.BCEWithLogitsLoss()
-criterion = SoftDiceLoss()
+criterion = nn.BCELoss()
+# criterion = nn.BCEWithLogitsLoss()
+#criterion = SoftDiceLoss()
 
 for epoch in range(epochs):
     net.train()
@@ -66,12 +66,12 @@ for epoch in range(epochs):
 
         for k in range(0,4):
             #img[k] = img[k].to(device=device, dtype=torch.float32)
-            if img[k].size(0)!=5:
-                print(img[k].size())
+
             img[k]=gray2rgb_tensor(img[k]).to(device=device)
             #print(img[k].size())
             #img[k] = Variable(img[k], requires_grad=False)
             masks_pred = net(img[k])
+            masks_pred = torch.sigmoid(masks_pred)
             #masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)  # 二值化
             #masks_pred=torch.sigmoid(masks_pred)
             #注意这里的维度【batch-size，channel，w，h】
@@ -117,9 +117,10 @@ for epoch in range(epochs):
         true_masks = Variable(torch.unsqueeze(true_masks, dim=1).float(), requires_grad=False)
         for k in range(0, 4):
             #img[k] = img[k].to(device=device, dtype=torch.float32)
-            img[k] = gray2rgb_tensor(img[k])
+            img[k] = gray2rgb_tensor(img[k]).to(device=device)
             #img[k] = Variable(img[k], requires_grad=False)
             masks_pred = net(img[k])
+            masks_pred = torch.sigmoid(masks_pred)
             #masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)  # 二值化
             #masks_pred[masks_pred < 0.0] = 0.0
             #masks_pred[masks_pred > 1.0] = 1.0
@@ -127,4 +128,4 @@ for epoch in range(epochs):
     print('epoch {}'.format(epoch+1),end='\t')
     print('val_loss:{}'.format(val_loss / (4 * len(val_loader))))
 
-torch.save(net.state_dict(), './added_data_stack_model_'+str(epochs)+'_epoch.pth')
+torch.save(net.state_dict(), './FCN_lr'+str(learnrate)+'_model_'+str(epochs)+'_epoch.pth')

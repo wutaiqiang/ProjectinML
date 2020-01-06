@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from torch import optim
 from torchvision import transforms
-from dataset import MyDataSet
+from dataset import *
 from torch.utils.data import DataLoader, random_split
 from torch.autograd import Variable
 import time
@@ -16,7 +16,7 @@ from FCNmodel import FCNs,VGGNet
 data_file='./data_val'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 batch_size=1
-Model_path='./added_data_stack_model_5_epoch.pth'
+Model_path='./FCN_lr0.0001_model_20_epoch.pth'
 
 transform = transforms.Compose([
     #transforms.Resize((256,256)),
@@ -38,25 +38,24 @@ for i, batch in enumerate(data_loader):
         img,true_masks=batch
 
         for k in range(0,4):
-            img[k] = img[k].to(device=device, dtype=torch.float32)
-            img[k] = Variable(img[k], requires_grad=False)
-            #img[k] = Variable(requires_grad=False)
-            #plt.imshow(img[k].squeeze().cpu().numpy())
-            #plt.show()
-        img = torch.stack((img[1], img[2],img[3]), dim=1)
-
-        #print(img.size())
-        #print(img.size())
-        masks_pred = Model(img)
-
-        masks_pred = torch.ge(masks_pred, 0.5).type(dtype=torch.float32)
-
-        plt.subplot(121)
+            img[k]=gray2rgb_tensor(img[k]).to(device=device)
+            masks_pred = Model(img[k])
+            masks_pred = torch.ge(masks_pred, 0.0000001).type(dtype=torch.float32)
+            #masks_pred = torch.sigmoid(masks_pred)
+        plt.subplot(231)
+        plt.imshow(img[0][0,0,:,:].cpu().numpy())
+        plt.subplot(232)
+        plt.imshow(img[1][0,0,:,:].cpu().numpy())
+        plt.subplot(233)
+        plt.imshow(img[2][0,0,:,:].cpu().numpy())
+        plt.subplot(234)
+        plt.imshow(img[3][0,0,:,:].cpu().numpy())
+        plt.subplot(235)
         plt.imshow(masks_pred[0, 0, :, :].cpu())
-        plt.subplot(122)
+        plt.subplot(236)
         plt.imshow(true_masks[0, :, :])
-        plt.pause(2)
-        #plt.show()
+        #plt.pause(2)
+        plt.show()
 
         '''
         mask_sum=torch.zeros(260,320)
