@@ -16,7 +16,7 @@ from resnet50model import Resnet_Unet as RUNet
 data_file='./data_val'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 batch_size=1
-Model_path='./UNET_mlp_bias_model+0.0001_lr_14_epoch.pth'
+Model_path='./UNET_mlp_bias_model+0.0001_lr_25_epoch.pth'
 
 dataset = MyDataSet(data_file,transform_data=None,transform_label=None)
 data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)

@@ -10,7 +10,7 @@ import time
 import matplotlib.pyplot as plt
 
 from unet import UNet
-from resnet50model import Resnet_Unet as RUNet
+
 from FCNmodel import FCNs,VGGNet
 #参数
 data_file='./data_val'

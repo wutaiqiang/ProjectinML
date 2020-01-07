@@ -16,8 +16,8 @@ data_file='./data_train'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 batch_size=1
-epochs=5
-learnrate=1e-3
+epochs=30
+learnrate=0.0001
 pretrain=False
 
 transform = transforms.Compose([

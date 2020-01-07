@@ -62,6 +62,7 @@ for epoch in range(epochs):
 
         loss = criterion(masks_pred, true_masks)
         running_loss += loss.item()
+
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
