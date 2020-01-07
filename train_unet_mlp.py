@@ -3,21 +3,19 @@ import torch
 import torch.nn as nn
 from torch import optim
 from torchvision import transforms
-from dataset import MyDataSet
-from torch.utils.data import DataLoader, random_split
+import matplotlib.pyplot as plt
 from torch.autograd import Variable
 import time
 from dataset import *
 from unet_mlp import UNet
-from resnet50model import Resnet_Unet as RUNet
-#可调节参数
+
 val_percent=0.2
 data_file='./data_train'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 batch_size=1
-epochs=5
-learnrate=1e-3
+epochs=30
+learnrate=0.0001
 pretrain=False
 
 transform = transforms.Compose([
@@ -35,20 +33,17 @@ val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=0
 #net = RUNet(BN_enable=True, resnet_pretrain=False).to(device)
 #if pretrain:
 #    net.load_state_dict(torch.load(Model_path))
+net = UNet(n_channels=3, n_classes=2).to(device=device)
 
-net=UNet(n_channels=3, n_classes=1).to(device=device)
-#print(net)
 
 #optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8)
-#optimizer = optim.Adam(net.parameters(), lr=learnrate)
-optimizer=optim.SGD(net.parameters(), lr=learnrate,momentum=0.9)
+optimizer = optim.Adam(net.parameters(), lr=learnrate, betas=(0.9, 0.99))
+#optimizer=optim.SGD(net.parameters(), lr=learnrate,momentum=0.9)
 #criterion = nn.BCELoss().to(device)
 
-if net.n_classes > 1:
-    criterion = nn.CrossEntropyLoss()
-else:
-    criterion = nn.BCEWithLogitsLoss()
+criterion = nn.BCELoss()
 
+allloss=[]
 for epoch in range(epochs):
     net.train()
     start = time.time()
@@ -57,12 +52,14 @@ for epoch in range(epochs):
         img, true_masks = batch
         if not label_tumor_exist(true_masks.squeeze().cpu().numpy()):
             continue
-        true_masks = true_masks.to(device=device, dtype=torch.float32)
-        true_masks = Variable(torch.unsqueeze(true_masks, dim=1).float(), requires_grad=False)
+
+        true_masks = layer2_label(true_masks).to(device=device)
 
         for k in range(0,4):
             img[k] = gray2rgb_tensor(img[k]).to(device=device, dtype=torch.float32)
         masks_pred = net(img)
+        masks_pred = torch.sigmoid(masks_pred)
+
         loss = criterion(masks_pred, true_masks)
         running_loss += loss.item()
         optimizer.zero_grad()
@@ -79,15 +76,24 @@ for epoch in range(epochs):
     net.eval()
     for i, batch in enumerate(val_loader):
         img, true_masks = batch
-        true_masks = true_masks.to(device=device, dtype=torch.float32)
-        true_masks = Variable(torch.unsqueeze(true_masks, dim=1).float(), requires_grad=False)
+        true_masks = layer2_label(true_masks).to(device=device)
         for k in range(0, 4):
-            img[k] = gray2rgb_tensor(img[k].to(device=device, dtype=torch.float32))
+            img[k] = gray2rgb_tensor(img[k]).to(device=device, dtype=torch.float32)
         masks_pred = net(img)
+        masks_pred = torch.sigmoid(masks_pred)
         val_loss += criterion(masks_pred, true_masks).item()
+
+    allloss.append(val_loss / (4 * len(val_loader)))
 
     print('epoch {}'.format(epoch+1),end='\t')
     print('val_loss:{}'.format(val_loss / (4 * len(val_loader))))
-
-torch.save(net.state_dict(), './UNET_mlp_model+'+str(learnrate)+'_lr_'+str(epochs)+'_epoch.pth')
+    if epoch+1 in range(10,35,5):
+        torch.save(net.state_dict(), './UNET_mlp_bias_model+'+str(learnrate)+'_lr_'+str(epoch+1)+'_epoch.pth')
+    if epoch == epochs-1:
+        plt.plot(allloss)
+        plt.xlabel('Epoch')
+        plt.ylabel('val loss')
+        plt.title('Val Loss for Unet_MLP Model')
+        plt.savefig("valloss.png")
+        plt.show()
 

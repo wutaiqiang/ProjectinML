@@ -81,8 +81,10 @@ class OUTLinear(nn.Module):
         self.weight2 = torch.rand([1, 1, 256, 320], requires_grad=True).cuda()
         self.weight3 = torch.rand([1, 1, 256, 320], requires_grad=True).cuda()
         self.weight4 = torch.rand([1, 1, 256, 320], requires_grad=True).cuda()
+        self.bias1 = torch.rand([1, 1, 256, 320], requires_grad=True).cuda()
         
 
     def forward(self,x1,x2,x3,x4):
         x = torch.mul(self.weight1,x1)+torch.mul(self.weight2,x2)+torch.mul(self.weight3,x3)+torch.mul(self.weight4,x4)
+        x += self.bias1
         return x
