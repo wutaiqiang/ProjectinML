@@ -13,7 +13,7 @@ from unet import UNet
 
 from FCNmodel import FCNs,VGGNet
 #参数
-data_file='./data_val'
+data_file= 'data_test'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 batch_size=1
 Model_path= 'FCN_lr0.0001_model_20_epoch.pth'

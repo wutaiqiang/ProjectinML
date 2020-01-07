@@ -1,7 +1,7 @@
 # ProjectinML
 
 ## 数据准备
-制作./data_train,./data_val两个文件夹
+制作./data_train,./data_test两个文件夹
 将文件夹命名成FZMC开头
 将四个阶段的.nii以及label.nii放在其中
 

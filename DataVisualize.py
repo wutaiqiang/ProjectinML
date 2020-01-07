@@ -23,11 +23,27 @@ def readtxt(txtdir):
 
 if __name__=='__main__':
 
-    txtdir = R"C:\Users\Taki5\Desktop\Withbias.txt"
-    t,v = readtxt(txtdir)
+    twith,vwith = readtxt(R"C:\Users\Taki5\Desktop\Withbias.txt")
+    tfcn, vfcn = readtxt(R"C:\Users\Taki5\Desktop\FCN_lr0.0001_20_epoch.txt")
+    tunet, vunet = readtxt(R"C:\Users\Taki5\Desktop\unet.txt")
+    epoch = 20
+    x = range(1,epoch+1)
     # plot
     plt.subplot(211)
-    plt.plot(t)
+    plt.plot(x, twith[:epoch],color="deeppink",linewidth=1,linestyle=':',label='UMnet', marker='.')
+    plt.plot(x, tfcn[:epoch], color="darkblue",linewidth=1,linestyle='-.',label='FCN', marker='x')
+    plt.plot(x, tunet[:epoch],color="goldenrod",linewidth=1,linestyle='-',label='Unet', marker='*')
+    plt.xlabel('Epoch')
+    plt.ylabel('Train loss per epoch')
+    plt.legend()
+    plt.title('Train and Vali loss')
+
     plt.subplot(212)
-    plt.plot(v)
+    plt.plot(x, vwith[:epoch], color="deeppink", linewidth=1, linestyle=':', label='UMnet', marker='.')
+    plt.plot(x, vfcn[:epoch], color="darkblue", linewidth=1, linestyle='-.', label='FCN', marker='x')
+    plt.plot(x, vunet[:epoch], color="goldenrod", linewidth=1, linestyle='-', label='Unet', marker='*')
+    plt.xlabel('Epoch')
+    plt.ylabel('Validation loss per epoch')
+
+
     plt.show()

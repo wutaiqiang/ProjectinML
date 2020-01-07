@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from unet_mlp import UNet
 
 # 参数
-data_file = './data_val'
+data_file = 'data_test'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 batch_size = 1
 Model_path = './UNET_mlp_bias_model+0.0001_lr_25_epoch.pth'
