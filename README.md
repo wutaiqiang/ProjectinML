@@ -13,3 +13,7 @@
 
 ### 注：
 将plt.show()改成plt.pause(2)即可自动切图
+
+## 其他文件
+DataVisualize.py 是将loss可视化的程序
+test_all.py 是将三个模型的输出一起plot出来

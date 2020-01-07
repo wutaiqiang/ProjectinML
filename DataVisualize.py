@@ -23,9 +23,9 @@ def readtxt(txtdir):
 
 if __name__=='__main__':
 
-    twith,vwith = readtxt(R"C:\Users\Taki5\Desktop\Withbias.txt")
-    tfcn, vfcn = readtxt(R"C:\Users\Taki5\Desktop\FCN_lr0.0001_30_epoch.txt")
-    tunet, vunet = readtxt(R"C:\Users\Taki5\Desktop\unet.txt")
+    twith,vwith = readtxt(R"Withbias.txt")
+    tfcn, vfcn = readtxt(R"FCN_lr0.0001_30_epoch.txt")
+    tunet, vunet = readtxt(R"unet.txt")
     epoch = 30
     x = range(1,epoch+1)
     # plot
