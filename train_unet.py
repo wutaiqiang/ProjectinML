@@ -1,43 +1,31 @@
-import numpy as np
-import torch
-import torch.nn as nn
+
 from torch import optim
 from torchvision import transforms
-from dataset import MyDataSet
 from torch.utils.data import DataLoader, random_split
 from torch.autograd import Variable
 import time
 from dataset import *
 from unet import UNet
-from resnet50model import Resnet_Unet as RUNet
-#可调节参数
-val_percent=0.2
-data_file='./data_train'
+
+# 可调节参数
+val_percent = 0.2
+data_file = './data_train'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-batch_size=1
-epochs=30
-learnrate=0.0001
-pretrain=False
+batch_size = 1
+epochs = 30
+learnrate = 0.0001
 
-transform = transforms.Compose([
-    #transforms.Resize((256,256)),
-    transforms.ToTensor()
-])
-#划分数据集
+# 划分数据集
 dataset = MyDataSet(data_file,transform_data=None,transform_label=None,add_labeled_sample=False)
 n_val = int(len(dataset) * val_percent)
 n_train = len(dataset) - n_val
 train, val = random_split(dataset, [n_train, n_val])
 train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
 val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
-#训练网络
-#net = RUNet(BN_enable=True, resnet_pretrain=False).to(device)
-#if pretrain:
-#    net.load_state_dict(torch.load(Model_path))
+# 训练网络
+net = UNet(n_channels=3, n_classes=1).to(device=device)
 
-net=UNet(n_channels=3, n_classes=1).to(device=device)
-#print(net)
 
 #optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8)
 #optimizer = optim.Adam(net.parameters(), lr=learnrate)

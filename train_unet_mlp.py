@@ -1,27 +1,20 @@
-import numpy as np
-import torch
-import torch.nn as nn
+
 from torch import optim
-from torchvision import transforms
-import matplotlib.pyplot as plt
-from torch.autograd import Variable
+from random import *
 import time
+
+from torch.utils.data.dataset import random_split
 from dataset import *
 from unet_mlp import UNet
 
-val_percent=0.2
-data_file='./data_train'
+val_percent = 0.2
+data_file = './data_train'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-batch_size=1
-epochs=30
-learnrate=0.0001
-pretrain=False
+batch_size = 1
+epochs = 30
+learnrate = 0.0001
 
-transform = transforms.Compose([
-    #transforms.Resize((256,256)),
-    transforms.ToTensor()
-])
 #划分数据集
 dataset = MyDataSet(data_file,transform_data=None,transform_label=None,add_labeled_sample=False)
 n_val = int(len(dataset) * val_percent)
@@ -30,9 +23,7 @@ train, val = random_split(dataset, [n_train, n_val])
 train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
 val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
 #训练网络
-#net = RUNet(BN_enable=True, resnet_pretrain=False).to(device)
-#if pretrain:
-#    net.load_state_dict(torch.load(Model_path))
+
 net = UNet(n_channels=3, n_classes=2).to(device=device)
 
 
@@ -44,6 +35,7 @@ optimizer = optim.Adam(net.parameters(), lr=learnrate, betas=(0.9, 0.99))
 criterion = nn.BCELoss()
 
 allloss=[]
+
 for epoch in range(epochs):
     net.train()
     start = time.time()
@@ -52,9 +44,7 @@ for epoch in range(epochs):
         img, true_masks = batch
         if not label_tumor_exist(true_masks.squeeze().cpu().numpy()):
             continue
-
         true_masks = layer2_label(true_masks).to(device=device)
-
         for k in range(0,4):
             img[k] = gray2rgb_tensor(img[k]).to(device=device, dtype=torch.float32)
         masks_pred = net(img)

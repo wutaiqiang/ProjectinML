@@ -1,18 +1,13 @@
 import SimpleITK as sitk
-#import skimage.io as io
 import os
 import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
-from os.path import splitext
 import numpy as np
-from glob import glob
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 import torch.nn as nn
-import torch.nn.functional as F
-from PIL import Image
 
+'''
 
 class SoftDiceLoss(nn.Module):
     def __init__(self, weight=None, size_average=True):
@@ -30,17 +25,12 @@ class SoftDiceLoss(nn.Module):
         score = 2. * (intersection.sum(1) + smooth) / (m1.sum(1) + m2.sum(1) + smooth)
         score = 1 - score.sum() / num
         return score
-
+'''
 def show_img(data,label):
     '''
     将nii得到的图片依次可视化
     '''
     for i in range(data[0].shape[0]):
-        '''
-        io.imshow(data[i,:,:])
-        print(i)
-        io.show()
-        '''
         for k in range(0,4):
             plt.subplot(2,3,k+1)
             plt.imshow(data[k][i,:,:])
@@ -74,20 +64,17 @@ def readfolder(folder):
     '''
     读取文件夹内的nii
     '''
-    #folder='./data/FZMC005'
     dname=['pre.nii','artery.nii','portal.nii','delay.nii']
     l_path = os.path.join(folder,'label.nii')
     img = sitk.ReadImage(l_path)
     label = sitk.GetArrayFromImage(img)
-    #print(label.shape)
 
     data=[]
     for k in range(0,4):
         d_path = os.path.join(folder,dname[k])
         img2 = sitk.ReadImage(d_path)
         data.append(sitk.GetArrayFromImage(img2))
-        
-    #print(len(data))
+
     return data,label
 
 class MyDataSet(Dataset):
@@ -143,32 +130,26 @@ class MyDataSet(Dataset):
         else:
             mask = self.a_label[index][:256,:]
 
-        #return [torch.from_numpy(image1/1.0),torch.from_numpy(image2/1.0),
-                #torch.from_numpy(image3/1.0),torch.from_numpy(image4/1.0),torch.from_numpy(mask/1.0)]
         return [[image1/1.0,image2/1.0,
                 image3/1.0,image4/1.0],mask/1.0]
-        # return self.a_data1[index][:,:],self.a_data2[index][:,:],self.a_data3[index][:,:],self.a_data4[index][:,:],self.a_label[index][:,:]
+
 
     def __len__(self):
         return len(self.a_label)
 
 
 def label_tumor_exist(a):
+    '''
+    检测Label是否存在肿瘤
+    '''
     aa=np.sum(a)
     return aa>0
 
-def gray2rgb_tensor(input):
-    output = torch.zeros(input.size(0),3,input.size(1),input.size(2))
-    for b in range(input.size(0)):
-        a=input[b,:,:]
-        maxa = torch.max(a)
-        mina = torch.min(a)
-        a = (a - mina) / (maxa - mina)
-        output[b,:,:,:] = torch.stack((a, a, a), dim=0)
-    #print(output.size())
-    return output
 
 def gray2rgb_tensor(input):
+    '''
+    将输入的灰度图变成[3,h,w]的图
+    '''
     output = torch.zeros(input.size(0),3,input.size(1),input.size(2))
     for b in range(input.size(0)):
         a=input[b,:,:]
@@ -180,23 +161,19 @@ def gray2rgb_tensor(input):
     return output
 
 def layer2_label(input):
-    #print(input.size())
+    '''
+    将label分割成前景与背景
+    '''
     output = torch.zeros(input.size(0), 2, input.size(1), input.size(2))
     for j in range(input.size(0)):
         input1 = input[j,:,:]
-
         input2 = torch.ones_like(input1)
         input2 = input2 - input1
         output[j,:,:,:] = torch.stack((input1, input2), dim=0)
-    #print(output.size())
     return output
 
       
 if __name__=='__main__':
-    '''
-    d,l=readfolder('./data/FZMC001')
-    show_img(d,l)
-    '''
     a=MyDataSet('./data_train',add_labeled_sample=False)
     train_loader = DataLoader(a, batch_size=1, shuffle=True, num_workers=0, pin_memory=True)
     '''
@@ -208,7 +185,6 @@ if __name__=='__main__':
             T=T+1
     print("in which {} with tumor,{} wothout tumor".format(T,len(a)-T))
     '''
-
     for ii, batch in enumerate(train_loader):
         i,mask=batch
         for j in range(0,4):
@@ -219,23 +195,6 @@ if __name__=='__main__':
         plt.subplot(2,3,6)
         plt.imshow(mask.squeeze())
         plt.show()
-    '''
-    for ii, batch in enumerate(train_loader):
-        i, mask = batch
-        a= torch.zeros([4,256,320])
-        for j in range(0, 4):
-            a[j] = i[j].squeeze()
-            maxa = torch.max(a[j])
-            mina = torch.min(a[j])
-            a[j] = (a[j] - mina) / (maxa - mina)
-        aa= torch.stack((a[1], a[2], a[3]), dim=2)
-        aa = aa.cpu().numpy()
-        plt.subplot(2, 1,  1)
-        plt.imshow(aa)
-        plt.subplot(2, 1, 2)
-        plt.imshow(mask.squeeze())
-        plt.show()
-    '''
 
 
        
